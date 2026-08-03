@@ -61,17 +61,19 @@ Context::~Context() {
 #endif
     GetConfig()->Save();
     mConfig = nullptr;
-    mLogger->flush();
-    mLogger = nullptr;
-    // Drop the registered async logger before Windows begins unloading the
-    // spdlog DLL. Otherwise its worker can deadlock during process teardown.
-    spdlog::shutdown();
+    if (mLogger != nullptr) {
+        mLogger->flush();
+        mLogger = nullptr;
+        // Drop the registered async logger before Windows begins unloading the
+        // spdlog DLL. Otherwise its worker can deadlock during process teardown.
+        spdlog::shutdown();
 #ifndef _DEBUG
-    mLogThreadPool = nullptr;
+        mLogThreadPool = nullptr;
 #endif
-    // Static destructors can still emit logs after Context is gone. Leave a
-    // synchronous sinkless logger behind so those calls remain valid.
-    spdlog::set_default_logger(std::make_shared<spdlog::logger>("shutdown"));
+        // Static destructors can still emit logs after Context is gone. Leave a
+        // synchronous sinkless logger behind so those calls remain valid.
+        spdlog::set_default_logger(std::make_shared<spdlog::logger>("shutdown"));
+    }
 }
 
 Context* Context::CreateInstance(const std::string& name, const std::string& shortName,
