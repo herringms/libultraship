@@ -150,7 +150,7 @@ class GfxRenderingAPIDX11 final : public GfxRenderingAPI {
     Microsoft::WRL::ComPtr<ID3D11ComputeShader> mComputeShader;
     Microsoft::WRL::ComPtr<ID3D11ComputeShader> mComputeShaderMsaa;
     Microsoft::WRL::ComPtr<ID3DBlob> mComputeShaderMsaaBlob;
-    size_t mCoordBufferSize;
+    size_t mCoordBufferSize = 0;
 
 #if DEBUG_D3D
     Microsoft::WRL::ComPtr<ID3D11Debug> debug;

@@ -206,7 +206,7 @@ class GfxRenderingAPIMetal final : public GfxRenderingAPI {
     // Depth querying
     MTL::Buffer* mCoordUniformBuffer;
     MTL::Buffer* mDepthValueOutputBuffer;
-    size_t mCoordBufferSize;
+    size_t mCoordBufferSize = 0;
     MTL::Function* mDepthComputeFunction;
     MTL::Function* mConvertToRgb5a1Function;
     MTL::ComputePipelineState* mConvertToRgb5a1PipelineState = nullptr;

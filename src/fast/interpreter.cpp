@@ -5310,9 +5310,11 @@ void Interpreter::GetPixelDepthPrepare(float x, float y) {
 }
 
 uint16_t Interpreter::GetPixelDepth(float x, float y) {
+    constexpr uint16_t kFarDepth = 0xFFFC;
     AdjustPixelDepthCoordinates(x, y);
+    const auto coordinate = std::make_pair(x, y);
 
-    if (auto it = mGetPixelDepthCached.find(std::make_pair(x, y)); it != mGetPixelDepthCached.end()) {
+    if (auto it = mGetPixelDepthCached.find(coordinate); it != mGetPixelDepthCached.end()) {
         return it->second;
     }
 
@@ -5323,7 +5325,11 @@ uint16_t Interpreter::GetPixelDepth(float x, float y) {
     mGetPixelDepthCached.merge(res);
     mGetPixelDepthPending.clear();
 
-    return mGetPixelDepthCached.find(std::make_pair(x, y))->second;
+    if (auto it = mGetPixelDepthCached.find(coordinate); it != mGetPixelDepthCached.end()) {
+        return it->second;
+    }
+
+    return kFarDepth;
 }
 
 void gfx_push_current_dir(char* path) {

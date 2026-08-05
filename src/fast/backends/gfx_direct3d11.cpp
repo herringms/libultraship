@@ -1124,10 +1124,31 @@ FilteringMode GfxRenderingAPIDX11::GetTextureFilter() {
 
 std::unordered_map<std::pair<float, float>, uint16_t, hash_pair_ff>
 GfxRenderingAPIDX11::GetPixelDepth(int fb_id, const std::set<std::pair<float, float>>& coordinates) {
-    FramebufferDX11& fb = mFrameBuffers[fb_id];
-    TextureData& td = mTextures[fb.texture_id];
+    constexpr uint16_t kFarDepth = 0xFFFC;
+    std::unordered_map<std::pair<float, float>, uint16_t, hash_pair_ff> res;
+    for (const auto& coord : coordinates) {
+        res.emplace(coord, kFarDepth);
+    }
 
-    if (coordinates.size() > mCoordBufferSize) {
+    if (coordinates.empty() || fb_id < 0 || fb_id >= static_cast<int>(mFrameBuffers.size()) ||
+        mDevice.Get() == nullptr || mContext.Get() == nullptr) {
+        return res;
+    }
+
+    FramebufferDX11& fb = mFrameBuffers[fb_id];
+    if (fb.texture_id >= mTextures.size() || !fb.has_depth_buffer || fb.depth_stencil_srv.Get() == nullptr) {
+        return res;
+    }
+
+    TextureData& td = mTextures[fb.texture_id];
+    if (td.width == 0 || td.height == 0 ||
+        (fb.msaa_level > 1 ? mComputeShaderMsaaBlob.Get() == nullptr : mComputeShader.Get() == nullptr)) {
+        return res;
+    }
+
+    if (coordinates.size() > mCoordBufferSize || mCoordBuffer.Get() == nullptr || mCoordBufferSrv.Get() == nullptr ||
+        mDepthValueOutputBuffer.Get() == nullptr || mDepthValueOutputUav.Get() == nullptr ||
+        mDepthValueOutputBufferCopy.Get() == nullptr) {
         mCoordBuffer.Reset();
         mCoordBufferSrv.Reset();
         mDepthValueOutputBuffer.Reset();
@@ -1216,11 +1237,10 @@ GfxRenderingAPIDX11::GetPixelDepth(int fb_id, const std::set<std::pair<float, fl
 
     mContext->CopyResource(mDepthValueOutputBufferCopy.Get(), mDepthValueOutputBuffer.Get());
     ThrowIfFailed(mContext->Map(mDepthValueOutputBufferCopy.Get(), 0, D3D11_MAP_READ, 0, &ms));
-    std::unordered_map<std::pair<float, float>, uint16_t, hash_pair_ff> res;
     {
         size_t i = 0;
         for (const auto& coord : coordinates) {
-            res.emplace(coord, ((float*)ms.pData)[i++] * 65532.0f);
+            res.insert_or_assign(coord, ((float*)ms.pData)[i++] * 65532.0f);
         }
     }
     mContext->Unmap(mDepthValueOutputBufferCopy.Get(), 0);
