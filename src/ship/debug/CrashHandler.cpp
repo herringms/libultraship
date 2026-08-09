@@ -310,6 +310,12 @@ void CrashHandler::PrintStack(CONTEXT* ctx) {
 #if defined(_M_AMD64)
     STACKFRAME64 stack;
     memset(&stack, 0, sizeof(STACKFRAME64));
+    stack.AddrPC.Offset = ctx->Rip;
+    stack.AddrPC.Mode = AddrModeFlat;
+    stack.AddrStack.Offset = ctx->Rsp;
+    stack.AddrStack.Mode = AddrModeFlat;
+    stack.AddrFrame.Offset = ctx->Rbp;
+    stack.AddrFrame.Mode = AddrModeFlat;
 #elif defined(WINDOWS_32_BIT)
     STACKFRAME stack;
     memset(&stack, 0, sizeof(STACKFRAME));
