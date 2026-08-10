@@ -69,7 +69,10 @@ void Fast3dGui::HandleWindowEvents(Fast::WindowEvent event) {
     switch (mImpl.Backend) {
         case WindowBackend::FAST3D_SDL_OPENGL:
         case WindowBackend::FAST3D_SDL_METAL:
-            ImGui_ImplSDL2_ProcessEvent(static_cast<const SDL_Event*>(event.Sdl.Event));
+            if (event.Sdl.Event != nullptr && ImGui::GetCurrentContext() != nullptr &&
+                ImGui::GetIO().BackendPlatformUserData != nullptr) {
+                ImGui_ImplSDL2_ProcessEvent(static_cast<const SDL_Event*>(event.Sdl.Event));
+            }
 #if defined(__ANDROID__) || defined(__IOS__)
             Ship::Mobile::ImGuiProcessEvent(ImGui::GetIO().WantTextInput);
 #endif
